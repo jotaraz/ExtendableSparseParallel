@@ -65,6 +65,94 @@ function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, tid, v; kn
 	end
 end
 
+
+"""
+`function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, v; known_that_unknown=true) where {Tv, Ti <: Integer}`
+
+A[i,j] += v, using any partition.
+If the partition should be specified (for parallel use), use 
+`function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, tid, v; known_that_unknown=true) where {Tv, Ti <: Integer}`.
+"""
+function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, v; known_that_unknown=true) where {Tv, Ti <: Integer}
+	if known_that_unknown
+		level, tid = last_nz(A.old_noderegions[:, A.rev_new_indices[j]])
+		A.lnkmatrices[tid][i, A.sortednodesperthread[tid, j]] += v
+		return
+	end
+	
+	if updatentryCSC2!(A.cscmatrix, i, j, v)
+	else
+		level, tid = last_nz(A.old_noderegions[:, A.rev_new_indices[j]])
+		A.lnkmatrices[tid][i, A.sortednodesperthread[tid, j]] += v
+	end
+end
+
+#---------------------------------
+
+
+function updateindex!(ext::ExtendableSparseMatrixParallel{Tv, Ti},
+                      op,
+                      v,
+                      i,
+                      j) where {Tv, Ti <: Integer}
+    k = ExtendableSparse.findindex(ext.cscmatrix, i, j)
+    if k > 0
+        ext.cscmatrix.nzval[k] = op(ext.cscmatrix.nzval[k], v)
+        return
+    else
+    	level, tid = last_nz(ext.old_noderegions[:, ext.rev_new_indices[j]])
+		updateindex!(ext.lnkmatrices[tid], op, v, i, ext.sortednodesperthread[tid, j])
+    end
+    ext
+end
+
+function rawupdateindex!(ext::ExtendableSparseMatrixParallel{Tv, Ti},
+                         op,
+                         v,
+                         i,
+                         j) where {Tv, Ti <: Integer}
+    k = ExtendableSparse.findindex(ext.cscmatrix, i, j)
+    if k > 0
+        ext.cscmatrix.nzval[k] = op(ext.cscmatrix.nzval[k], v)
+    else
+        level, tid = last_nz(ext.old_noderegions[:, ext.rev_new_indices[j]])
+	    rawupdateindex!(ext.lnkmatrices[tid], op, v, i, ext.sortednodesperthread[tid, j])
+    end
+    ext
+end
+
+function Base.getindex(ext::ExtendableSparseMatrixParallel{Tv, Ti},
+                       i::Integer,
+                       j::Integer) where {Tv, Ti <: Integer}
+    k = ExtendableSparse.findindex(ext.cscmatrix, i, j)
+    if k > 0
+        return ext.cscmatrix.nzval[k]
+    end
+    
+    level, tid = last_nz(ext.old_noderegions[:, ext.rev_new_indices[j]])
+	ext.lnkmatrices[tid][i, ext.sortednodesperthread[tid, j]]
+    
+end
+
+function Base.setindex!(ext::ExtendableSparseMatrixParallel{Tv, Ti},
+                        v::Union{Number,AbstractVecOrMat},
+                        i::Integer,
+                        j::Integer) where {Tv, Ti}
+    k = ExtendableSparse.findindex(ext.cscmatrix, i, j)
+    if k > 0
+        ext.cscmatrix.nzval[k] = v
+    else
+		level, tid = last_nz(ext.old_noderegions[:, ext.rev_new_indices[j]])
+		#@info typeof(tid), typeof(j)
+		jj = ext.sortednodesperthread[tid, j]
+		ext.lnkmatrices[tid][i, jj] = v
+    end
+end
+
+
+
+#------------------------------------
+
 function reset!(A::ExtendableSparseMatrixParallel{Tv, Ti}) where {Tv, Ti <: Integer}
 	A.cscmatrix = spzeros(Tv, Ti, num_nodes(A.grid), num_nodes(A.grid))
 	A.lnkmatrices = [SuperSparseMatrixLNK{Tv, Ti}(num_nodes(A.grid), A.nnts[tid]) for tid=1:A.nt]
@@ -128,7 +216,7 @@ include("struct_flush.jl")
 
 
 export ExtendableSparseMatrixParallel, SuperSparseMatrixLNK
-export addtoentry!, reset!, dummy_assembly!, preparatory_multi_ps_less_reverse, fr
+export addtoentry!, reset!, dummy_assembly!, preparatory_multi_ps_less_reverse, fr, rawupdateindex!, updateindex!
 
 
 end
