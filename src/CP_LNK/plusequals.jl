@@ -30,8 +30,8 @@ function add_LNKs!(A,B) #A += B
 end
 
 function CSC_LNK_plusequals!(
-	As::Vector{SparseMatrixLNK{Float64, Int32}}, 
-	C::SparseArrays.SparseMatrixCSC{Float64, Int32}, nt)
+	As::Vector{SparseMatrixLNK{Tv, Ti}}, 
+	C::SparseArrays.SparseMatrixCSC{Tv, Ti}, nt) where {Tv, Ti <: Integer}
 
 	for tid=2:nt
 		add_LNKs!(As[1], As[tid])

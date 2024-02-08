@@ -9,7 +9,7 @@ function flush!(A::ExtendableSparseMatrixParallel; do_dense=false)
 	
 	end
 	
-	A.lnkmatrices = [SuperSparseMatrixLNK{Float64, Int32}(num_nodes(A.grid), A.nnts[tid]) for tid=1:A.nt]
+	A.lnkmatrices = [SuperSparseMatrixLNK{matrixvaluetype(A), matrixindextype(A)}(num_nodes(A.grid), A.nnts[tid]) for tid=1:A.nt]
 
 end
 
@@ -28,17 +28,17 @@ end
 `CSC_RLNK_si_oc_ps_dz_less_reordered` from `conversion.jl`
 """
 function dense_flush!(
-	As::Vector{SuperSparseMatrixLNK{Float64, Int32}}, 
+	As::Vector{SuperSparseMatrixLNK{Tv, Ti}}, 
 	onr, s, nt, rni
-	)
+	) where {Tv, Ti <: Integer}
 
 	nnz = sum([As[i].nnz for i=1:nt]) #you could also subtract the diagonal entries from shared columns, since those are definitely double
-	indptr = zeros(Int32, As[1].m+1)
-	indices = zeros(Int32, nnz) #sum(As.nnz))
+	indptr = zeros(Ti, As[1].m+1)
+	indices = zeros(Ti, nnz) #sum(As.nnz))
 	data = zeros(Float64, nnz) #sum(As.nnz))
 	ctr = 1
 	eqctr = 0
-	tmp = zeros(Int32, size(onr)[1])
+	tmp = zeros(Ti, size(onr)[1])
 	
 	for nj=1:As[1].m
 		indptr[nj] = ctr

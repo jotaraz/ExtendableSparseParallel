@@ -4,11 +4,11 @@
 
 Dummy assembly (da) of an LNK using 'using cheap parallelization' with some zeros (since the off-diagonal entries have the sign -1, 0 or 1).
 """
-function da_LNK_cp_sz_reordered(cellnodes, nn, cfp, nt::Integer, ni)
+function da_LNK_cp_sz_reordered!(As, cellnodes, nn, cfp, nt::Integer, ni)
 	K = size(cellnodes)[1]
 	#nc_nt = Int(num_cells(grid)/nt)
 	#cfp = [collect((tid-1)*nc_nt+1:tid*nc_nt) for tid=1:nt]
-	As = [SparseMatrixLNK{Float64, Int32}(nn, nn) for tid=1:nt]
+	#As = [SparseMatrixLNK{Float64, Int32}(nn, nn) for tid=1:nt]
 	
 	@threads :static for tid=1:nt
 		for icell in cfp[tid] 
@@ -31,9 +31,9 @@ function da_LNK_cp_sz_reordered(cellnodes, nn, cfp, nt::Integer, ni)
 	As
 end
 
-function da_LNK_sz_reordered(cellnodes, nn, ni)
+function da_LNK_sz_reordered!(A, cellnodes, nn, ni)
 	K, nc = size(cellnodes)	
-	A = ExtendableSparseMatrix{Float64, Int32}(nn, nn)
+	#A = ExtendableSparseMatrix{Float64, Int32}(nn, nn)
 	
 	for icell=1:nc
 		tmp = view(cellnodes, :, icell)

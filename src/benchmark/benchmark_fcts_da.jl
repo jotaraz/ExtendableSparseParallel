@@ -1,53 +1,41 @@
 # normal
-function benchmark_da_LNK_seq(cn, nn, ni, num)
+function benchmark_da_LNK_seq(cn, nn, ni, num, Tv, Ti)
 	time = zeros(num)
-	
-	A = da_LNK_sz_reordered(cn, nn, ni)
+	A = ExtendableSparseMatrix{Tv, Ti}(nn, nn)
+	A = da_LNK_sz_reordered!(A, cn, nn, ni)
 	
 	for i=1:num
-		time[i] = @elapsed (da_LNK_sz_reordered(cn, nn, ni))
+		A1 = ExtendableSparseMatrix{Tv, Ti}(nn, nn)
+		time[i] = @elapsed (da_LNK_sz_reordered!(A1, cn, nn, ni))
 		GC.gc()
 	end
 	
-	all = @allocated (da_LNK_sz_reordered(cn, nn, ni))
+	A1 = ExtendableSparseMatrix{Tv, Ti}(nn, nn)
+	all = @allocated (da_LNK_sz_reordered!(A1, cn, nn, ni))
 	
 	time, all, A
 end
 
 
 # cheap parallelization / just to get an idea how fast a parallelized process could be
-function benchmark_da_LNK_par(cn, nn, cfp, nt, ni, num)
+function benchmark_da_LNK_par(cn, nn, cfp, nt, ni, num, Tv, Ti)
 	time = zeros(num)
-	
-	A = da_LNK_cp_sz_reordered(cn, nn, cfp, nt, ni)
+	As = As = [SparseMatrixLNK{Tv, Ti}(nn, nn) for tid=1:nt]
+	As = da_LNK_cp_sz_reordered!(As, cn, nn, cfp, nt, ni)
 	
 	for i=1:num
-		time[i] = @elapsed (da_LNK_cp_sz_reordered(cn, nn, cfp, nt, ni))
+		As1 = [SparseMatrixLNK{Tv, Ti}(nn, nn) for tid=1:nt]
+		time[i] = @elapsed (da_LNK_cp_sz_reordered!(As1, cn, nn, cfp, nt, ni))
 		GC.gc()
 	end
 	
-	all = @allocated (da_LNK_cp_sz_reordered(cn, nn, cfp, nt, ni))
+	As1 = [SparseMatrixLNK{Tv, Ti}(nn, nn) for tid=1:nt]
+	all = @allocated (da_LNK_cp_sz_reordered!(As1, cn, nn, cfp, nt, ni))
 	
-	time, all, A
+	time, all, As
 
 end
 
-
-# reduced LNKs (less) ...
-function benchmark_da_RLNK_par(cn, nn, nnts, s, cfp, nt, depth, gi, ni, num)
-	time = zeros(num)
-	
-	A = da_RLNK_oc_ps_sz_less_reordered(cn, nn, nnts, s, cfp, nt, depth, gi, ni)
-
-	for i=1:num
-		time[i] = @elapsed (da_RLNK_oc_ps_sz_less_reordered(cn, nn, nnts, s, cfp, nt, depth, gi, ni))
-		GC.gc()
-	end
-	
-	all = @allocated (da_RLNK_oc_ps_sz_less_reordered(cn, nn, nnts, s, cfp, nt, depth, gi, ni))
-	
-	time, all, A
-end
 
 # ExtendableSparseMatrixParallel struct
 function benchmark_da_ESMP(A, num)

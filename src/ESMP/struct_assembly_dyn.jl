@@ -21,7 +21,7 @@ function entryexists2(CSC, i, j) #find out if CSC already has an nonzero entry a
 end
 
 
-function updatentryCSC2!(CSC::SparseArrays.SparseMatrixCSC{Float64, Int32}, i::Integer, j::Integer, v::Float64)
+function updatentryCSC2!(CSC::SparseArrays.SparseMatrixCSC{Tv, Ti}, i::Integer, j::Integer, v) where {Tv, Ti <: Integer}
 	p1 = CSC.colptr[j]
 	p2 = CSC.colptr[j+1]-1
 
@@ -48,7 +48,7 @@ function dummy_assembly!(A::ExtendableSparseMatrixParallel{Tv, Ti}; offset=0, di
 		gi = A.globalindices
 		ni = A.new_indices
 		if dynamic
-			A.lnkmatrices = da_RLNK_oc_ps_sz_less_reordered_super_spawn(cn, nn, nnts, s, cfp, nt, depth, gi, ni; offset=offset, diagval=diagval, symm=symm, skew=skew)
+			A.lnkmatrices = da_RLNK_oc_ps_sz_less_reordered_super_spawn(cn, nn, nnts, s, cfp, nt, depth, gi, ni, Tv, Ti; offset=offset, diagval=diagval, symm=symm, skew=skew)
 		else
 			A.lnkmatrices = da_RLNK_oc_ps_sz_less_reordered_super(cn, nn, nnts, s, cfp, nt, depth, gi, ni; offset=offset, diagval=diagval, symm=symm, skew=skew)
 		end
@@ -64,9 +64,9 @@ end
 
 
 
-function da_RLNK_oc_ps_sz_less_reordered_super_spawn(cellnodes, nn, nnts, s, cellsforpart, nt, depth, gi, ni; offset=0, diagval=5.0, symm=0.5, skew=0.25)
+function da_RLNK_oc_ps_sz_less_reordered_super_spawn(cellnodes, nn, nnts, s, cellsforpart, nt, depth, gi, ni, Tv, Ti; offset=0, diagval=5.0, symm=0.5, skew=0.25)
 	K = size(cellnodes)[1]
-	As = [SuperSparseMatrixLNK{Float64, Int32}(nn, nnts[tid]) for tid=1:nt]
+	As = [SuperSparseMatrixLNK{Tv, Ti}(nn, nnts[tid]) for tid=1:nt]
 
 	for level=1:depth
 		@threads for tid=1:nt

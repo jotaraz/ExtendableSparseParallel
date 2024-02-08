@@ -45,9 +45,9 @@ end
 
 
 function ExtendableSparseMatrixParallel{Tv, Ti}(nm, nt, depth) where {Tv, Ti <: Integer}
-	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts = preparatory_multi_ps_less_reverse(nm, nt, depth)
+	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts = preparatory_multi_ps_less_reverse(nm, nt, depth, Ti)
 	csc = spzeros(Tv, Ti, num_nodes(grid), num_nodes(grid))
-	lnk = [SuperSparseMatrixLNK{Float64, Int32}(num_nodes(grid), nnts[tid]) for tid=1:nt]
+	lnk = [SuperSparseMatrixLNK{Tv, Ti}(num_nodes(grid), nnts[tid]) for tid=1:nt]
 	ExtendableSparseMatrixParallel{Tv, Ti}(csc, lnk, grid, nnts, s, onr, cfp, gi, ni, rni, starts, nt, depth)
 end
 
@@ -65,9 +65,9 @@ function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, tid, v; kn
 	end
 end
 
-function reset!(A::ExtendableSparseMatrixParallel)
-	A.cscmatrix = spzeros(Float64, Int32, num_nodes(A.grid), num_nodes(A.grid))
-	A.lnkmatrices = [SuperSparseMatrixLNK{Float64, Int32}(num_nodes(A.grid), A.nnts[tid]) for tid=1:A.nt]
+function reset!(A::ExtendableSparseMatrixParallel{Tv, Ti}) where {Tv, Ti <: Integer}
+	A.cscmatrix = spzeros(Tv, Ti, num_nodes(A.grid), num_nodes(A.grid))
+	A.lnkmatrices = [SuperSparseMatrixLNK{Tv, Ti}(num_nodes(A.grid), A.nnts[tid]) for tid=1:A.nt]
 end
 
 function nnz_flush(ext::ExtendableSparseMatrixParallel)
@@ -79,6 +79,15 @@ function nnz_noflush(ext::ExtendableSparseMatrixParallel)
     return nnz(ext.cscmatrix), sum([ext.lnkmatrices[i].nnz for i=1:ext.nt])
 end
 	
+function matrixindextype(A::ExtendableSparseMatrixParallel{Tv, Ti}) where {Tv, Ti <: Integer}
+	Ti
+end
+
+function matrixvaluetype(A::ExtendableSparseMatrixParallel{Tv, Ti}) where {Tv, Ti <: Integer}
+	Tv
+end
+
+
 
 function Base.show(io::IO, ::MIME"text/plain", ext::ExtendableSparseMatrixParallel)
     #flush!(ext)

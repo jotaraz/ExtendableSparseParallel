@@ -6,20 +6,20 @@
 `depth` is the number of partition layers, for depth=1, there are nt parts and 1 separator, for depth=2, the separator is partitioned again, leading to 2*nt+1 submatrices...
 To assemble the system matrix parallely, things such as `cellsforpart` (= which thread takes which cells) need to be computed in advance. This is done here.
 """
-function preparatory_multi_ps_less_reverse(nm, nt, depth; sequential=false)
+function preparatory_multi_ps_less_reverse(nm, nt, depth, Ti; sequential=false)
 	grid = getgrid(nm)
 	
 	if sequential
-		(allcells, start) = grid_to_graph_ps_multi!(grid, nt, depth)#)
+		(allcells, start, cellparts) = grid_to_graph_ps_multi!(grid, nt, depth)#)
 	else
-		(allcells, start) = grid_to_graph_ps_multi_par!(grid, nt, depth)
+		(allcells, start, cellparts) = grid_to_graph_ps_multi_par!(grid, nt, depth)
 	end
 
 	(nnts, s, onr, gi, gc, ni, rni, starts) = get_nnnts_and_sortednodesperthread_and_noderegs_from_cellregs_ps_less_reverse_nopush(
-		grid[CellRegions], allcells, start, num_nodes(grid), Int32, nt
+		cellparts, allcells, start, num_nodes(grid), Ti, nt
 	)
 	
-	cfp = bettercellsforpart(grid[CellRegions], depth*nt+1)
+	cfp = bettercellsforpart(cellparts, depth*nt+1)
 	return grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts
 end
 
@@ -238,9 +238,7 @@ function grid_to_graph_ps_multi!(grid, nt, depth)
 	end
 
 			
-	grid[CellRegions] = cellregs
-	
-	return allcells, start
+	return allcells, start, cellregs
 end
 
 
@@ -286,7 +284,7 @@ function grid_to_graph_ps_multi_par!(grid, nt, depth)
 				end
 			end	
 		end
-		flush!(As[tid])
+		ExtendableSparse.flush!(As[tid])
 	end
 	
 	ACSC = add_all_par!(As).cscmatrix
@@ -327,9 +325,7 @@ function grid_to_graph_ps_multi_par!(grid, nt, depth)
 	end
 
 			
-	grid[CellRegions] = cellregs
-	
-	return allcells, start
+	return allcells, start, cellregs
 end
 
 
@@ -420,5 +416,12 @@ function get_starts(n, nt)
 	ret
 end
 
-
+function last_nz(x)
+	n = length(x)
+	for j=n:-1:1
+		if x[j] != 0
+			return (j, x[j])
+		end
+	end
+end
 

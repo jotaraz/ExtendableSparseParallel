@@ -13,7 +13,7 @@ function entryexists2(CSC, i, j) #find out if CSC already has an nonzero entry a
 end
 
 
-function updatentryCSC2!(CSC::SparseArrays.SparseMatrixCSC{Float64, Int32}, i::Integer, j::Integer, v::Float64)
+function updatentryCSC2!(CSC::SparseArrays.SparseMatrixCSC{Tv, Ti}, i::Integer, j::Integer, v) where {Tv, Ti <: Integer}
 	p1 = CSC.colptr[j]
 	p2 = CSC.colptr[j+1]-1
 
@@ -38,8 +38,8 @@ Dummy assembly in the CSC matrix cheaply parallelized.
 THIS IS UNSAFE (can lead to wrong results) AND ONLY DONE FOR TESTING.
 Different threads concurrently write into the same matrix entry.
 """
-function da_csc_LNK_cp_reordered!(C, cellnodes, cfp, grid, ni, nt; offset=0)
-	A_backup = [SparseMatrixLNK{Float64, Int32}(num_nodes(grid), num_nodes(grid)) for i=1:nt]
+function da_csc_LNK_cp_reordered!(C::SparseMatrixCSC{Tv, Ti}, cellnodes, cfp, grid, ni, nt; offset=0) where {Tv, Ti <: Integer}
+	A_backup = [SparseMatrixLNK{Tv, Ti}(num_nodes(grid), num_nodes(grid)) for i=1:nt]
 	#nc_nt = Int(num_cells(grid)/nt)
 	#cfp = [collect((tid-1)*nc_nt+1:tid*nc_nt) for tid=1:nt]
 	K = size(cellnodes)[1]

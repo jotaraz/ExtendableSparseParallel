@@ -53,12 +53,12 @@ Ways (for the last two tasks):
 We use an FEM-like assembly/matrix on an `nm` grid (i.e. nm=(300,70) for 300 x 70 grid or nm=(100,80,40) for a 100 x 80 x 40 grid), run on `nt` threads.
 `depth` gives the level of refinement steps (i.e. how often is the separator partitioned again?).
 """
-function comparison(nm, nt, depth; num=10, offset=1)
-	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts = preparatory_multi_ps_less_reverse(nm, nt, depth)
+function comparison(nm, nt, depth; num=10, offset=1, Tv=Float64, Ti=Int64)
+	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts = preparatory_multi_ps_less_reverse(nm, nt, depth, Ti)
 	
-	csc = spzeros(Float64, Int32, num_nodes(grid), num_nodes(grid))
-	lnk = [SuperSparseMatrixLNK{Float64, Int32}(num_nodes(grid), nnts[tid]) for tid=1:nt]
-	ESMP = ExtendableSparseMatrixParallel{Float64, Int32}(csc, lnk, grid, nnts, s, onr, cfp, gi, ni, rni, starts, nt, depth)
+	csc = spzeros(Tv, Ti, num_nodes(grid), num_nodes(grid))
+	lnk = [SuperSparseMatrixLNK{Tv, Ti}(num_nodes(grid), nnts[tid]) for tid=1:nt]
+	ESMP = ExtendableSparseMatrixParallel{Tv, Ti}(csc, lnk, grid, nnts, s, onr, cfp, gi, ni, rni, starts, nt, depth)
 	
 	nn = num_nodes(grid)
 	cellnodes = grid[CellNodes]
@@ -70,7 +70,7 @@ function comparison(nm, nt, depth; num=10, offset=1)
 	
 	
 	
-	As = bm_da(cellnodes, nn, nnts, s, cfp, nt, depth, gi, ni, cfpCP, num)
+	As = bm_da(cellnodes, nn, nnts, s, cfp, nt, depth, gi, ni, cfpCP, num, Tv, Ti)
 	
 	C0 = bm_con(As, onr, s, nt, rni, num)
 	
@@ -86,37 +86,6 @@ function comparison(nm, nt, depth; num=10, offset=1)
 	bm_sub(Is, num)
 	
 	@info ""
-end
-
-
-function compare_dyn_sta(nm, nt, depth; offset=1, num=10)
-	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts = preparatory_multi_ps_less_reverse(nm, nt, depth)
-	csc = spzeros(Float64, Int32, num_nodes(grid), num_nodes(grid))
-	lnk = [SuperSparseMatrixLNK{Float64, Int32}(num_nodes(grid), nnts[tid]) for tid=1:nt]
-	
-	ESMP = ExtendableSparseMatrixParallel{Float64, Int32}(csc, lnk, grid, nnts, s, onr, cfp, gi, ni, rni, starts, nt, depth)
-	for i=1:num
-		reset!(ESMP)
-		dummy_assembly!(ESMP; offset=0, skew=0.0, known_that_unknown=true, dynamic=true)
-		flush!(ESMP; do_dense=true)
-		A1 = copy(ESMP.cscmatrix)
-		dummy_assembly!(ESMP; offset=1, diagval=3.0, dynamic=true)
-		flush!(ESMP)
-		A2 = copy(ESMP.cscmatrix)
-	
-		reset!(ESMP)
-		dummy_assembly!(ESMP; offset=0, skew=0.0, known_that_unknown=true, dynamic=false)
-		flush!(ESMP; do_dense=true)
-		A3 = copy(ESMP.cscmatrix)
-		dummy_assembly!(ESMP; offset=1, diagval=3.0, dynamic=false)
-		flush!(ESMP)
-		A4 = copy(ESMP.cscmatrix)
-	
-		
-		compare_matrices_light(A1, A3)
-		compare_matrices_light(A2, A4)
-	end
-	
 end
 
 function bm_ESMP(A, num, C0, C1)
@@ -142,10 +111,10 @@ end
 	
 
 
-function bm_da(cn, nn, nnts, s, cfp, nt, depth, gi, ni, cfpCP, num)
-	t1, a1, A1 = benchmark_da_LNK_seq(cn, nn, ni, num)
+function bm_da(cn, nn, nnts, s, cfp, nt, depth, gi, ni, cfpCP, num, Tv, Ti)
+	t1, a1, A1 = benchmark_da_LNK_seq(cn, nn, ni, num, Tv, Ti)
 	
-	t2, a2, A2 = benchmark_da_LNK_par(cn, nn, cfpCP, nt, ni, num)
+	t2, a2, A2 = benchmark_da_LNK_par(cn, nn, cfpCP, nt, ni, num, Tv, Ti)
 	
 	#t3, a3, A3 = benchmark_da_RLNK_par(cn, nn, nnts, s, cfp, nt, depth, gi, ni, num)
 	
