@@ -20,7 +20,7 @@ function preparatory_multi_ps_less_reverse(nm, nt, depth, Ti; sequential=false)
 	)
 	
 	cfp = bettercellsforpart(cellparts, depth*nt+1)
-	return grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts
+	return grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts, cellparts
 end
 
 
@@ -391,17 +391,17 @@ end
 Returns a simplexgrid with a given number of nodes in each dimension.
 `nm` is the number of nodes in each dimension (Examples: 2d: nm = (100,100) -> 100 x 100 grid, 3d: nm = (50,50,50) -> 50 x 50 x 50 grid).
 """
-function getgrid(nm)
+function getgrid(nm; x0=0.0, x1=1.0)
 	if length(nm) == 2
 		n,m = nm
-		xx = collect(LinRange(0.0, 1.0, n))
-		yy = collect(LinRange(0.0, 1.0, m))
+		xx = collect(LinRange(x0, x1, n))
+		yy = collect(LinRange(x0, x1, m))
 		grid = simplexgrid(xx, yy)
 	else 
 		n,m,l = nm
-		xx = collect(LinRange(0.0, 1.0, n))
-		yy = collect(LinRange(0.0, 1.0, m))
-		zz = collect(LinRange(0.0, 1.0, l))
+		xx = collect(LinRange(x0, x1, n))
+		yy = collect(LinRange(x0, x1, m))
+		zz = collect(LinRange(x0, x1, l))
 		grid = simplexgrid(xx, yy, zz)
 	end
 	grid

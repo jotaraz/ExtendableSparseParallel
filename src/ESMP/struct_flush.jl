@@ -2,7 +2,7 @@ function flush!(A::ExtendableSparseMatrixParallel; do_dense=false)
 
 
 	if do_dense
-		A.cscmatrix = dense_flush!(A.lnkmatrices, A.old_noderegions, A.sortednodesperthread, A.nt, A.rev_new_indices)
+		A.cscmatrix = A.cscmatrix+dense_flush!(A.lnkmatrices, A.old_noderegions, A.sortednodesperthread, A.nt, A.rev_new_indices)
 	
 	else
 		A.cscmatrix = sparse_flush!(A)
@@ -17,7 +17,7 @@ function ESMP_flush!(A; do_dense=false)
 
 
 	if do_dense
-		A.cscmatrix = dense_flush!(A.lnkmatrices, A.old_noderegions, A.sortednodesperthread, A.nt, A.rev_new_indices, matrixindextype(A))
+		A.cscmatrix = A.cscmatrix+dense_flush!(A.lnkmatrices, A.old_noderegions, A.sortednodesperthread, A.nt, A.rev_new_indices, matrixindextype(A))
 	
 	else
 		A.cscmatrix = sparse_flush!(A)

@@ -54,11 +54,11 @@ We use an FEM-like assembly/matrix on an `nm` grid (i.e. nm=(300,70) for 300 x 7
 `depth` gives the level of refinement steps (i.e. how often is the separator partitioned again?).
 """
 function comparison(nm, nt, depth; num=10, offset=1, Tv=Float64, Ti=Int64)
-	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts = preparatory_multi_ps_less_reverse(nm, nt, depth, Ti)
+	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts, cellparts = preparatory_multi_ps_less_reverse(nm, nt, depth, Ti)
 	
 	csc = spzeros(Tv, Ti, num_nodes(grid), num_nodes(grid))
 	lnk = [SuperSparseMatrixLNK{Tv, Ti}(num_nodes(grid), nnts[tid]) for tid=1:nt]
-	ESMP = ExtendableSparseMatrixParallel{Tv, Ti}(csc, lnk, grid, nnts, s, onr, cfp, gi, ni, rni, starts, nt, depth)
+	ESMP = ExtendableSparseMatrixParallel{Tv, Ti}(csc, lnk, grid, nnts, s, onr, cfp, gi, ni, rni, starts, cellparts, nt, depth)
 	
 	nn = num_nodes(grid)
 	cellnodes = grid[CellNodes]

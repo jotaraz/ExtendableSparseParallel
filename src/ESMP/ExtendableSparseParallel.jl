@@ -36,19 +36,22 @@ mutable struct ExtendableSparseMatrixParallel{Tv, Ti <: Integer} <: AbstractSpar
     
     start::Vector{Ti}
     
+    cellparts::Vector{Ti}
+    
     nt::Ti
     
     depth::Ti
+    
     
 end
 
 
 
 function ExtendableSparseMatrixParallel{Tv, Ti}(nm, nt, depth) where {Tv, Ti <: Integer}
-	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts = preparatory_multi_ps_less_reverse(nm, nt, depth, Ti)
+	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts, cellparts = preparatory_multi_ps_less_reverse(nm, nt, depth, Ti)
 	csc = spzeros(Tv, Ti, num_nodes(grid), num_nodes(grid))
 	lnk = [SuperSparseMatrixLNK{Tv, Ti}(num_nodes(grid), nnts[tid]) for tid=1:nt]
-	ExtendableSparseMatrixParallel{Tv, Ti}(csc, lnk, grid, nnts, s, onr, cfp, gi, ni, rni, starts, nt, depth)
+	ExtendableSparseMatrixParallel{Tv, Ti}(csc, lnk, grid, nnts, s, onr, cfp, gi, ni, rni, starts, cellparts, nt, depth)
 end
 
 
@@ -106,6 +109,22 @@ function updateindex!(ext::ExtendableSparseMatrixParallel{Tv, Ti},
     ext
 end
 
+function updateindex!(ext::ExtendableSparseMatrixParallel{Tv, Ti},
+                      op,
+                      v,
+                      i,
+                      j,
+                      tid) where {Tv, Ti <: Integer}
+    k = ExtendableSparse.findindex(ext.cscmatrix, i, j)
+    if k > 0
+        ext.cscmatrix.nzval[k] = op(ext.cscmatrix.nzval[k], v)
+        return
+    else
+    	updateindex!(ext.lnkmatrices[tid], op, v, i, ext.sortednodesperthread[tid, j])
+    end
+    ext
+end
+
 function rawupdateindex!(ext::ExtendableSparseMatrixParallel{Tv, Ti},
                          op,
                          v,
@@ -117,6 +136,21 @@ function rawupdateindex!(ext::ExtendableSparseMatrixParallel{Tv, Ti},
     else
         level, tid = last_nz(ext.old_noderegions[:, ext.rev_new_indices[j]])
 	    rawupdateindex!(ext.lnkmatrices[tid], op, v, i, ext.sortednodesperthread[tid, j])
+    end
+    ext
+end
+
+function rawupdateindex!(ext::ExtendableSparseMatrixParallel{Tv, Ti},
+                         op,
+                         v,
+                         i,
+                         j, 
+                         tid) where {Tv, Ti <: Integer}
+    k = ExtendableSparse.findindex(ext.cscmatrix, i, j)
+    if k > 0
+        ext.cscmatrix.nzval[k] = op(ext.cscmatrix.nzval[k], v)
+    else
+        rawupdateindex!(ext.lnkmatrices[tid], op, v, i, ext.sortednodesperthread[tid, j])
     end
     ext
 end
@@ -216,7 +250,7 @@ include("struct_flush.jl")
 
 
 export ExtendableSparseMatrixParallel, SuperSparseMatrixLNK
-export addtoentry!, reset!, dummy_assembly!, preparatory_multi_ps_less_reverse, fr, rawupdateindex!, updateindex!
+export addtoentry!, reset!, dummy_assembly!, preparatory_multi_ps_less_reverse, fr, rawupdateindex!, updateindex!, compare_matrices_light
 
 
 end
