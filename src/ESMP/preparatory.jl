@@ -6,8 +6,8 @@
 `depth` is the number of partition layers, for depth=1, there are nt parts and 1 separator, for depth=2, the separator is partitioned again, leading to 2*nt+1 submatrices...
 To assemble the system matrix parallely, things such as `cellsforpart` (= which thread takes which cells) need to be computed in advance. This is done here.
 """
-function preparatory_multi_ps_less_reverse(nm, nt, depth, Ti; sequential=false)
-	grid = getgrid(nm)
+function preparatory_multi_ps_less_reverse(nm, nt, depth, Ti; sequential=false, x0=0.0, x1=1.0)
+	grid = getgrid(nm; x0, x1)
 	
 	if sequential
 		(allcells, start, cellparts) = grid_to_graph_ps_multi!(grid, nt, depth)#)
