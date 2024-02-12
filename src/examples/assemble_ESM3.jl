@@ -109,7 +109,7 @@ function assemble_part_para_ESMP_essential3!(matrix, # System matrix
 	
 	
 	t_tri = @elapsed for level=1:depth
-		@threads :static for tid=1:nt
+		@threads for tid=1:nt
 			for itri in cfp[(level-1)*nt+tid]
 				for k_local=1:num_nodes_per_cell
 					k_global=trianglelist[k_local,itri]
