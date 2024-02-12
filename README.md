@@ -24,7 +24,7 @@ In general, running the example could look like this:
 $ julia -t 8
 julia> include("/home/.../ExtendableSparseParallel/src/examples/example_with_plot.jl")
 julia> validation((1000,1000); nt=8);
-[ Info: Matrices are equal
+[ Info: ("Max diff in solution: ", 3.6570746431152656e-13)
 [ Info: Times: 
 [ Info: ("Old LNK ____ ", (1.2530530799943553, 0.0008123850000000027))
 [ Info: ("Old CSC ____ ", (0.7274713019927594, 0.0005748780000000169))
