@@ -38,7 +38,7 @@ end
 
 
 # ExtendableSparseMatrixParallel struct
-function benchmark_da_ESMP(A, num)
+function benchmark_da_ESMP(A, num; parallel=true)
 	time1 = zeros(num)
 	time2 = zeros(num)
 	time3 = zeros(num)
@@ -46,10 +46,10 @@ function benchmark_da_ESMP(A, num)
 	time5 = zeros(num)
 	
 	
-	dummy_assembly!(A; offset=0, skew=0.0, known_that_unknown=true)
+	dummy_assembly!(A; offset=0, skew=0.0, known_that_unknown=true, parallel)
 	ExtendableSparseParallel.flush!(A; do_dense=true)
 	A1 = copy(A.cscmatrix)
-	dummy_assembly!(A; offset=1, diagval=3.0)
+	dummy_assembly!(A; offset=1, diagval=3.0, parallel)
 	ExtendableSparseParallel.flush!(A)
 	A2 = copy(A.cscmatrix)
 	
@@ -84,25 +84,25 @@ function benchmark_da_ESMP(A, num)
 	
 	for i=1:num
 		reset!(A)
-		time1[i] = @elapsed dummy_assembly!(A; offset=0, skew=0.0, known_that_unknown=true)
+		time1[i] = @elapsed dummy_assembly!(A; offset=0, skew=0.0, known_that_unknown=true, parallel)
 		time2[i] = @elapsed ExtendableSparseParallel.flush!(A; do_dense=true)
 		GC.gc()
-		time3[i] = @elapsed dummy_assembly!(A; offset=1, diagval=3.0)
+		time3[i] = @elapsed dummy_assembly!(A; offset=1, diagval=3.0, parallel)
 		time4[i] = @elapsed ExtendableSparseParallel.flush!(A)
 		GC.gc()
 	end
 	
 	for i=1:num
 		reset!(A)
-		time5[i] = @elapsed dummy_assembly!(A; offset=0, skew=0.0, known_that_unknown=true, extra_fct=false)
+		time5[i] = @elapsed dummy_assembly!(A; offset=0, skew=0.0, known_that_unknown=true, extra_fct=false, parallel)
 		GC.gc()
 	end
 	
 
 	reset!(A)
-	all1 = @allocated dummy_assembly!(A; offset=0, skew=0.0, known_that_unknown=true)
+	all1 = @allocated dummy_assembly!(A; offset=0, skew=0.0, known_that_unknown=true, parallel)
 	all2 = @allocated ExtendableSparseParallel.flush!(A; do_dense=true)
-	all3 = @allocated dummy_assembly!(A; offset=1, diagval=3.0)
+	all3 = @allocated dummy_assembly!(A; offset=1, diagval=3.0, parallel)
 	all4 = @allocated ExtendableSparseParallel.flush!(A)
 	
 	time1, time2, time3, time4, time5, all1, all2, all3, all4, A1, A2, A

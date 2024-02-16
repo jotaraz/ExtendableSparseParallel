@@ -311,9 +311,9 @@ end
 
 
 
-function da_RLNK_oc_ps_sz_less_reordered_super(cellnodes, nn, nnts, s, cellsforpart, nt, depth, gi, ni; offset=0, diagval=5.0, symm=0.5, skew=0.25)
+function da_RLNK_oc_ps_sz_less_reordered_super(cellnodes, nn, nnts, s, cellsforpart, nt, depth, gi, ni, Tv, Ti; offset=0, diagval=5.0, symm=0.5, skew=0.25)
 	K = size(cellnodes)[1]
-	As = [SuperSparseMatrixLNK{Float64, Int32}(nn, nnts[tid]) for tid=1:nt]
+	As = [SuperSparseMatrixLNK{Tv, Ti}(nn, nnts[tid]) for tid=1:nt]
 
 	for level=1:depth
 		@threads :static for tid=1:nt

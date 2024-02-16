@@ -53,7 +53,7 @@ Ways (for the last two tasks):
 We use an FEM-like assembly/matrix on an `nm` grid (i.e. nm=(300,70) for 300 x 70 grid or nm=(100,80,40) for a 100 x 80 x 40 grid), run on `nt` threads.
 `depth` gives the level of refinement steps (i.e. how often is the separator partitioned again?).
 """
-function comparison(nm, nt, depth; num=10, offset=1, Tv=Float64, Ti=Int64)
+function comparison(nm, nt, depth; num=10, offset=1, Tv=Float64, Ti=Int64, para=true)
 	grid, nnts, s, onr, cfp, gi, gc, ni, rni, starts, cellparts = preparatory_multi_ps_less_reverse(nm, nt, depth, Ti)
 	
 	csc = spzeros(Tv, Ti, num_nodes(grid), num_nodes(grid))
@@ -80,7 +80,7 @@ function comparison(nm, nt, depth; num=10, offset=1, Tv=Float64, Ti=Int64)
 	
 	C01, C02 = C0
 	
-	ESMP = bm_ESMP(ESMP, num, C02, C1) #C1 statt C01
+	ESMP = bm_ESMP(ESMP, num, C02, C1, para) #C1 statt C01
 	
 	Is = bm_ilu(ESMP, num)
 	bm_sub(Is, num)
@@ -88,8 +88,8 @@ function comparison(nm, nt, depth; num=10, offset=1, Tv=Float64, Ti=Int64)
 	@info ""
 end
 
-function bm_ESMP(A, num, C0, C1)
-	t1, t2, t3, t4, t5, a1, a2, a3, a4, A0, A1, A = benchmark_da_ESMP(A, num)
+function bm_ESMP(A, num, C0, C1, para)
+	t1, t2, t3, t4, t5, a1, a2, a3, a4, A0, A1, A = benchmark_da_ESMP(A, num; parallel=para)
 	
 	
 	@warn "ESMP:"

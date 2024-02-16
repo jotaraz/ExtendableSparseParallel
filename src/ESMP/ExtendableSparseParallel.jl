@@ -56,7 +56,7 @@ end
 
 
 
-function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, tid, v; known_that_unknown=true) where {Tv, Ti <: Integer}
+function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, tid, v; known_that_unknown=false) where {Tv, Ti <: Integer}
 	if known_that_unknown
 		A.lnkmatrices[tid][i, A.sortednodesperthread[tid, j]] += v
 		return
@@ -69,6 +69,23 @@ function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, tid, v; kn
 end
 
 
+#=
+function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, v; known_that_unknown=false) where {Tv, Ti <: Integer}
+	if known_that_unknown
+		level, tid = last_nz(ext.old_noderegions[:, ext.rev_new_indices[j]])
+		A.lnkmatrices[tid][i, A.sortednodesperthread[tid, j]] += v
+		return
+	end
+	
+	if updatentryCSC2!(A.cscmatrix, i, j, v)
+	else
+		level, tid = last_nz(ext.old_noderegions[:, ext.rev_new_indices[j]])
+		A.lnkmatrices[tid][i, A.sortednodesperthread[tid, j]] += v
+	end
+end
+=#
+
+
 """
 `function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, v; known_that_unknown=true) where {Tv, Ti <: Integer}`
 
@@ -76,7 +93,7 @@ A[i,j] += v, using any partition.
 If the partition should be specified (for parallel use), use 
 `function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, tid, v; known_that_unknown=true) where {Tv, Ti <: Integer}`.
 """
-function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, v; known_that_unknown=true) where {Tv, Ti <: Integer}
+function addtoentry!(A::ExtendableSparseMatrixParallel{Tv, Ti}, i, j, v; known_that_unknown=false) where {Tv, Ti <: Integer}
 	if known_that_unknown
 		level, tid = last_nz(A.old_noderegions[:, A.rev_new_indices[j]])
 		A.lnkmatrices[tid][i, A.sortednodesperthread[tid, j]] += v
@@ -250,7 +267,7 @@ include("struct_flush.jl")
 
 
 export ExtendableSparseMatrixParallel, SuperSparseMatrixLNK
-export addtoentry!, reset!, dummy_assembly!, preparatory_multi_ps_less_reverse, fr, rawupdateindex!, updateindex!, compare_matrices_light
+export addtoentry!, reset!, dummy_assembly!, preparatory_multi_ps_less_reverse, fr, addtoentry!, rawupdateindex!, updateindex!, compare_matrices_light
 
 
 end
