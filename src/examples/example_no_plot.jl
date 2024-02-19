@@ -41,6 +41,7 @@ end
 
 
 ### run & time example
+
 function validation(nm; depth=2, nt=3)
 	grid = ExtendableSparseParallel.getgrid(nm; x0=-1.0, x1=1.0)
 	n    = num_nodes(grid) #size(triout.pointlist,2)
@@ -106,6 +107,7 @@ function validation(nm; depth=2, nt=3)
 	mat0, mat1, mat2
 	
 end
+
 
 function reorder(x, ni)
 	y = copy(x)

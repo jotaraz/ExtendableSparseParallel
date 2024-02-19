@@ -34,7 +34,9 @@ end
 """
 function sparse_flush!(A::ExtendableSparseMatrixParallel)
 
-	dropzeros!(plus_remap(A.lnkmatrices, A.cscmatrix, A.globalindices))
+	#dropzeros!(
+	plus_remap(A.lnkmatrices, A.cscmatrix, A.globalindices)
+	#)
 		
 end
 
@@ -65,7 +67,7 @@ function dense_flush!(As, onr, s, nt, rni, Ti)
 				k = s[regmod, nj]
 				if regionctr == 1
 					while k>0
-						if As[regmod].nzval[k] != 0.0
+						#if As[regmod].nzval[k] != 0.0
 							indices[ctr] = As[regmod].rowval[k]
 							data[ctr]    = As[regmod].nzval[k]
 							
@@ -85,12 +87,12 @@ function dense_flush!(As, onr, s, nt, rni, Ti)
 							
 							ctr += 1
 							jc += 1
-						end
+						#end
 						k = As[regmod].colptr[k]
 					end
 				else
 					while k>0
-						if As[regmod].nzval[k] != 0.0
+						#if As[regmod].nzval[k] != 0.0
 							indices[ctr] = As[regmod].rowval[k]
 							data[ctr]    = As[regmod].nzval[k]
 							
@@ -123,7 +125,7 @@ function dense_flush!(As, onr, s, nt, rni, Ti)
 							
 							ctr += 1
 							jc += 1
-						end
+						#end
 						k = As[regmod].colptr[k]
 					end
 					
@@ -179,7 +181,7 @@ function dense_flush!(
 				k = s[regmod, nj]
 				if regionctr == 1
 					while k>0
-						if As[regmod].nzval[k] != 0.0
+						#if As[regmod].nzval[k] != 0.0
 							indices[ctr] = As[regmod].rowval[k]
 							data[ctr]    = As[regmod].nzval[k]
 							
@@ -199,12 +201,12 @@ function dense_flush!(
 							
 							ctr += 1
 							jc += 1
-						end
+						#end
 						k = As[regmod].colptr[k]
 					end
 				else
 					while k>0
-						if As[regmod].nzval[k] != 0.0
+						#if As[regmod].nzval[k] != 0.0
 							indices[ctr] = As[regmod].rowval[k]
 							data[ctr]    = As[regmod].nzval[k]
 							
@@ -237,7 +239,7 @@ function dense_flush!(
 							
 							ctr += 1
 							jc += 1
-						end
+						#end
 						k = As[regmod].colptr[k]
 					end
 					

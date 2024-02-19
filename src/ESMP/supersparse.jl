@@ -250,10 +250,10 @@ function get_column!(col::Vector{ColEntry{Tv, Ti}}, lnks::Vector{SuperSparseMatr
 		#tid = tids[j]
 		#k = j
 		while k>0
-			if abs(lnks[tid].nzval[k]) > 0
+			#if abs(lnks[tid].nzval[k]) > 0
 				ctr += 1
 				col[ctr] = ColEntry(lnks[tid].rowval[k], lnks[tid].nzval[k])
-			end
+			#end
 			k = lnks[tid].colptr[k]
 		end
 	end
